@@ -4,7 +4,8 @@ from discord.ext import commands
 import os
 import asyncio
 
-import setup.setup import setup_database
+from version import __version__
+from setup.setup import setup_database
 
 TOKEN = os.environ.get('DISCORD_TOKEN')
 

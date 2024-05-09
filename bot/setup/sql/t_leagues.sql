@@ -3,5 +3,5 @@ CREATE TABLE IF NOT EXISTS leagues (
     name VARCHAR(255) not null,
     g61_team_id VARCHAR(255),
     first_day_of_week integer,
-    date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-)
+    date_created TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
