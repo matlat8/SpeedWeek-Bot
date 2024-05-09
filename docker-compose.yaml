@@ -11,3 +11,18 @@ services:
       - ./data:/var/lib/postgresql/data
     ports:
       - 5432:5432
+
+  bot:
+    build:
+      dockerfile: Dockerfile
+      context: .
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_HOST: db
+      POSTRES_PORT: 5432
+      DISCORD_TOKEN: ${DISCORD_TOKEN}
+    restart: always
+    depends_on:
+      - db

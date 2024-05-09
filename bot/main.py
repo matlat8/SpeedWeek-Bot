@@ -1,5 +1,6 @@
 import discord
 from discord.ext import commands
+import discordhealthcheck
 
 import os
 import asyncio
@@ -19,6 +20,7 @@ setup_database()
 
 @bot.event
 async def on_ready():
+    healthcheck_server = await discordhealthcheck.start(bot)
     print(f'{bot.user} has connected to Discord!')
 
 
