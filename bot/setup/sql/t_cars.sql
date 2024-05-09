@@ -14,6 +14,6 @@ CREATE TABLE IF NOT EXISTS cars (
     has_rain_capable_tire_types BOOLEAN,
     hp INTEGER,
     is_ps_purchasable BOOLEAN,
-    price NUMBER(18,2),
-    rain_enabled BOOLEAN,
+    price FLOAT,
+    rain_enabled BOOLEAN
 );

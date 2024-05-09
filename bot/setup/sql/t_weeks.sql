@@ -1,4 +1,4 @@
-CREATE OR REPLACE TABLE weeks (
+CREATE TABLE IF NOT EXISTS weeks (
     id SERIAL PRIMARY KEY,
     season_id integer not null,
     week_num INTEGER not null,
