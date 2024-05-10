@@ -21,10 +21,15 @@ class LeagueCommands(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         team_id = msg.content
 
-        lap_check_data = await self.league_api.search_by_team(team_id)
-        if not lap_check_data['items']:
-            await ctx.send('No laps found for this team. Please make sure you have laps recorded for your team in Garage61.')
-            return
+        #lap_check_data = await self.league_api.search_by_team(team_id)
+        #if not lap_check_data['items']:
+        #    await ctx.send('No laps found for this team. Please make sure you have laps recorded for your team in Garage61.')
+        #    return
+        
+        conn = self.db.get_conn()
+        cursor = conn.cursor()
+        cursor.execute('INSERT INTO leagues (name, g61_team_id, first_day_of_week) values (?, ?, ?), (league_name.content, team_id, 1)')
+        conn.commit()
 
         await ctx.send(f'Creating league {league_name}... {team_id}')
 
