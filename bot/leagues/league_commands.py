@@ -35,7 +35,22 @@ class LeagueCommands(commands.Cog):
 
     @commands.command()
     async def viewleagues(self, ctx):
+        conn = self.db.get_conn()
+        cursor = conn.cursor()
+        cursor.execute('SELECT * FROM leagues')
+        leagues = cursor.fetchall()
+        print(leagues)
+        msg = 'League: {0}, Team ID: {1}, League ID: {2}\n'
+        
+        for league in leagues:
+            await ctx.send(msg.format(league[1], league[2], league[0]))
+
+        
         await ctx.send('Viewing leagues...')
+
+    @commands.command()
+    async def joinleague(self, ctx):
+        pass
 
     @commands.command()
     async def editleague(self, ctx, league_id):
