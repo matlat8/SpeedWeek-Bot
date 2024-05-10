@@ -30,6 +30,7 @@ class LeagueCommands(commands.Cog):
         cursor = conn.cursor()
         cursor.execute('INSERT INTO leagues (name, g61_team_id, first_day_of_week) values (%s, %s, %s)', (league_name.content, team_id, 1))
         conn.commit()
+        self.db.release_conn(conn)
 
         await ctx.send(f'Creating league {league_name.content}... {team_id}')
 
@@ -39,6 +40,7 @@ class LeagueCommands(commands.Cog):
         cursor = conn.cursor()
         cursor.execute('SELECT * FROM leagues')
         leagues = cursor.fetchall()
+        self.db.release_conn(conn)
         print(leagues)
         msg = 'League: {0}, Team ID: {1}, League ID: {2}\n'
         
