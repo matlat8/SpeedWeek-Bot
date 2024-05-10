@@ -6,7 +6,8 @@ import os
 import asyncio
 
 from version import __version__
-from setup.setup import setup_database
+from setup.setup import setup_database 
+from leagues import LeagueCommands
 
 TOKEN = os.environ.get('DISCORD_TOKEN')
 
@@ -21,6 +22,7 @@ setup_database()
 @bot.event
 async def on_ready():
     healthcheck_server = await discordhealthcheck.start(bot)
+    await bot.add_cog(LeagueCommands(bot))
     print(f'{bot.user} has connected to Discord!')
 
 
