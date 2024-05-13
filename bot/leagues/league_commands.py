@@ -21,9 +21,10 @@ class LeagueCommands(commands.Cog):
         msg = await self.bot.wait_for('message', check=check)
         team_id = msg.content
 
-        lap_check_data = await self.league_api.search_by_team(team_id)
-        if not lap_check_data['items']:
-            await ctx.send('No laps found for this team. Please make sure you have laps recorded for your team in Garage61.')
+        lap_check_data = await self.league_api.search_for_team(team_id)
+        
+        if not any(team['slug'] == team_id for team in lap_check_data['teams']): #check to see if team exists within teams array
+            await ctx.send('Invalid team ID.')
             return
         
         conn = self.db.get_conn()
