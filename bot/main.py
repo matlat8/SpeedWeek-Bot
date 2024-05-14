@@ -9,6 +9,7 @@ from version import __version__
 from setup.setup import setup_database 
 from leagues import LeagueCommands
 from seasons import SeasonCommands
+from weeks import WeeksCommands
 
 TOKEN = os.environ.get('DISCORD_TOKEN')
 
@@ -25,6 +26,7 @@ async def on_ready():
     healthcheck_server = await discordhealthcheck.start(bot)
     await bot.add_cog(LeagueCommands(bot))
     await bot.add_cog(SeasonCommands(bot))
+    await bot.add_cog(WeeksCommands(bot))
     print(f'{bot.user} has connected to Discord!')
 
 

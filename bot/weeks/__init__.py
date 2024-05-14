@@ -1,0 +1,1 @@
+from weeks.weeks_command import WeeksCommands
