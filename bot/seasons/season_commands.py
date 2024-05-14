@@ -52,8 +52,35 @@ class SeasonCommands(commands.Cog):
         
 
     @commands.command()
-    async def viewseasons(self, ctx):
-        await ctx.send('Viewing seasons...')
+    async def viewseasons(self, ctx, *args):
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+        conn = self.db.get_conn()
+        cur = conn.cursor()
+
+        if not args:
+            cur.execute('SELECT id, name FROM leagues')
+            leagues = cur.fetchall()
+            await ctx.send('What league would you like to view seasons for? Enter the ID of the league.')
+            for league in leagues:
+                await ctx.send(f'ID: {league[0]} --> Name: {league[1]}')
+            selected_league_id = await self.bot.wait_for('message', check=check).content
+        else:
+            try:
+                selected_league_id = int(args[0])
+            except ValueError:
+                await ctx.send('Invalid league ID.')
+                return
+
+        cur.execute('SELECT * FROM seasons WHERE league_id = %s', (selected_league_id,))
+        seasons = cur.fetchall()
+        if not seasons:
+            await ctx.send('No seasons found for this league.')
+            return
+        else:
+            for season in seasons:
+                await ctx.send(f'Season ID: {season[0]}\nSeason Number: {season[2]}\nStart Date: {season[3]}\nEnd Date: {season[4]}')
+        
 
     @commands.command()
     async def joinseason(self, ctx):
