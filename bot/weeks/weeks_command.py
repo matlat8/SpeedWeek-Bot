@@ -24,14 +24,14 @@ class WeeksCommands(commands.Cog):
 
         ## Get the active season
         cursor.execute('SELECT id FROM seasons WHERE league_id = %s AND end_date >= now()', (league_id.content,))
-        season_num = cursor.fetchone()
-        if season_num is None:
+        season_id = cursor.fetchone()
+        if season_id is None:
             await ctx.send('No active season found for the selected league.')
             return
-        print(season_num)
+        print(season_id)
         
         ## Get the week number
-        cursor.execute('SELECT MAX(week_num) FROM weeks WHERE season_id = %s', (season_num))
+        cursor.execute('SELECT MAX(week_num) FROM weeks WHERE season_id = %s', (season_id))
         week_num = cursor.fetchone()
         week_num = week_num[0] + 1 if week_num[0] is not None else 1
 
@@ -55,8 +55,8 @@ class WeeksCommands(commands.Cog):
             await ctx.send('Invalid track ID.')
             return
         
-        cursor.execute('INSERT INTO weeks (league_id, season_num, week_num, start_date, end_date, car_id, track_id) VALUES (%s, %s, %s, %s, %s, %s, %s)', (league_id.content, season_num[0], week_num, start_date.format('YYYY-MM-DD'), end_date.format('YYYY-MM-DD'), car_id.content, track_id.content))
+        cursor.execute('INSERT INTO weeks (season_id, week_num, start_date, end_date, car_id, track_id) VALUES (%s, %s, %s, %s, %s, %s)', (season_id[0], week_num, start_date.format('YYYY-MM-DD'), end_date.format('YYYY-MM-DD'), car_id, track_id))
         conn.commit()
     
-        self.db.release_conn(conn)
         await ctx.send('Created new week')
+        self.db.release_conn(conn)
