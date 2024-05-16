@@ -64,7 +64,7 @@ class SeasonCommands(commands.Cog):
             await ctx.send('What league would you like to view seasons for? Enter the ID of the league.')
             for league in leagues:
                 await ctx.send(f'ID: {league[0]} --> Name: {league[1]}')
-            selected_league_id = await self.bot.wait_for('message', check=check).content
+            selected_league_id = await self.bot.wait_for('message', check=check)
         else:
             try:
                 selected_league_id = int(args[0])
@@ -72,7 +72,7 @@ class SeasonCommands(commands.Cog):
                 await ctx.send('Invalid league ID.')
                 return
 
-        cur.execute('SELECT * FROM seasons WHERE league_id = %s', (selected_league_id,))
+        cur.execute('SELECT * FROM seasons WHERE league_id = %s', (selected_league_id.content,))
         seasons = cur.fetchall()
         if not seasons:
             await ctx.send('No seasons found for this league.')
