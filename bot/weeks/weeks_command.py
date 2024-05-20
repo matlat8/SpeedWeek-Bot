@@ -2,10 +2,13 @@ from discord.ext import commands, tasks
 import arrow
 from db import DB
 
+from .weeks_tasks import WeeksTasks
+
 class WeeksCommands(commands.Cog):
     def __init__(self, bot):
         self.bot = bot
         self.db = DB(1, 5)
+        self.weeks_tasks = WeeksTasks(bot)
 
     @commands.command()
     async def newweek(self, ctx):

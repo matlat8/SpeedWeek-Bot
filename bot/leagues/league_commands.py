@@ -52,10 +52,6 @@ class LeagueCommands(commands.Cog):
         await ctx.send('Viewing leagues...')
 
     @commands.command()
-    async def joinleague(self, ctx):
-        pass
-
-    @commands.command()
     async def editleague(self, ctx, league_id):
         await ctx.send(f'Editing league {league_id}...')
 
