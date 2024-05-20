@@ -42,14 +42,15 @@ class LeagueCommands(commands.Cog):
         cursor.execute('SELECT * FROM leagues')
         leagues = cursor.fetchall()
         self.db.release_conn(conn)
-        print(leagues)
+        if not leagues:
+            await ctx.send('No leagues found.')
+            return
         msg = 'League: {0}, Team ID: {1}, League ID: {2}\n'
         
         for league in leagues:
             await ctx.send(msg.format(league[1], league[2], league[0]))
 
-        
-        await ctx.send('Viewing leagues...')
+        return
 
     @commands.command()
     async def editleague(self, ctx, league_id):
