@@ -1,7 +1,9 @@
 from discord.ext import commands, tasks
 import arrow
+import os
 from db import DB
 
+from .api import WeeksAPI
 from .weeks_tasks import WeeksTasks
 
 class WeeksCommands(commands.Cog):
@@ -9,6 +11,7 @@ class WeeksCommands(commands.Cog):
         self.bot = bot
         self.db = DB(1, 5)
         self.weeks_tasks = WeeksTasks(bot)
+        self.weeksapi = WeeksAPI()
 
     @commands.command()
     async def newweek(self, ctx):
@@ -62,4 +65,39 @@ class WeeksCommands(commands.Cog):
         conn.commit()
     
         await ctx.send('Created new week')
+        self.db.release_conn(conn)
+
+    @commands.command()
+    async def currentweek(self, ctx):
+        def check(m):
+            return m.author == ctx.author and m.channel == ctx.channel
+
+        conn = self.db.get_conn()
+        cursor = conn.cursor()
+
+        cursor.execute('SELECT id, name from leagues')
+        leagues = cursor.fetchall()
+        await ctx.send('Enter the league ID for the week you would like to view.')
+        for league in leagues:
+            await ctx.send(f'ID: {league[0]} --> Name: {league[1]}')
+        league_id = await self.bot.wait_for('message', check=check)
+
+        with open(os.path.join(f'{os.path.dirname(__file__)}/sql', 'active_weeks.sql'), 'r') as f:
+            sql = f.read()
+
+        cursor.execute(sql, (league_id.content,))
+        weeks = cursor.fetchone()
+        if weeks is None:
+            await ctx.send('No active week found for the selected league.')
+            return
+        lap_data = await self.weeksapi.get_week_laps(weeks[3], weeks[2], weeks[4])
+        emojis = {1: '      🥇', 2: '    🥈', 3: '  🥉'}
+        msg = ''
+        for index, lap in enumerate(lap_data['items']):
+            rank = index + 1
+            emoji = emojis.get(rank, rank)
+            msg += f'**{emoji}** \t|\t{lap["driver"]["firstName"][0]}. {lap["driver"]["lastName"]} - *{lap["lapTime"]:.3f}*\n'
+
+        await ctx.send(msg)
+        
         self.db.release_conn(conn)
