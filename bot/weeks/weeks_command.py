@@ -90,7 +90,8 @@ class WeeksCommands(commands.Cog):
         if weeks is None:
             await ctx.send('No active week found for the selected league.')
             return
-        lap_data = await self.weeksapi.get_week_laps(weeks[3], weeks[2], weeks[4])
+        print(weeks[4])
+        lap_data = await self.weeksapi.get_week_laps(weeks[3], weeks[2], weeks[8], arrow.get(weeks[4]).format('YYYY-MM-DDTHH:mm:ss[Z]'))
         emojis = {1: '      🥇', 2: '    🥈', 3: '  🥉'}
         msg = ''
         msg += f'**{weeks[7]}**\n*S{weeks[6]}W{weeks[0]}*\n'

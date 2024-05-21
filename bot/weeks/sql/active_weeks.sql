@@ -6,7 +6,8 @@ select
     w.start_date as week_start_date,
     league_id,
     season_num,
-    name
+    name,
+    g61_team_id
 from weeks w
     left join seasons s
         on w.season_id = s.id
