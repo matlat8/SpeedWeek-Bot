@@ -93,6 +93,8 @@ class WeeksCommands(commands.Cog):
         lap_data = await self.weeksapi.get_week_laps(weeks[3], weeks[2], weeks[4])
         emojis = {1: '      🥇', 2: '    🥈', 3: '  🥉'}
         msg = ''
+        msg += f'**{weeks[7]}**\n*S{weeks[6]}W{weeks[0]}*\n'
+        msg += '-------------\n'
         for index, lap in enumerate(lap_data['items']):
             rank = index + 1
             emoji = emojis.get(rank, rank)
