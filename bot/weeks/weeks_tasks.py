@@ -3,6 +3,7 @@ import aiohttp
 from db import DB
 import aiohttp
 import os
+import arrow
 
 class WeeksTasks:
     def __init__(self, bot):
@@ -10,7 +11,7 @@ class WeeksTasks:
         self.db = DB(1, 5)
         self.check_weeks.start()
 
-    @tasks.loop(hours=1)
+    @tasks.loop(minutes=2)
     async def check_weeks(self):
         conn = self.db.get_conn()
         cur = conn.cursor()
@@ -39,17 +40,19 @@ WHERE w.start_date <= CURRENT_DATE
         
         print(week_params)
         for week in week_params:
-            laps = await self.get_week_laps(week[4], week[3], week[7])
+            laps = await self.get_week_laps(week[4], week[3], week[7], week[5])
             for lap in laps['items']:
                 lap['week_id'] = week[0]
                 lap['season_id'] = week[1]
                 lap['league_id'] = week[8]
                 await self.insert_results(conn, lap)
+        self.db.release_conn(conn)
 
-    async def get_week_laps(self, track_id, car_id, team_id):
+    async def get_week_laps(self, track_id, car_id, team_id, start_date):
         async with aiohttp.ClientSession() as session:
-
-            url = f"https://garage61.net/api/v1/laps?tracks={track_id}&cars={car_id}&teams={team_id}"
+            start_date = arrow.get(start_date).format('YYYY-MM-DDTHH:mm:ss[Z]')
+            print(start_date)
+            url = f"https://garage61.net/api/v1/laps?tracks={track_id}&cars={car_id}&teams={team_id}&after={start_date}"
             headers = {'Authorization': f'Bearer {os.environ.get("GARAGE61_API_KEY")}'}
             async with session.get(url, headers=headers) as response:
                 if response.status == 200:
@@ -72,7 +75,6 @@ WHERE w.start_date <= CURRENT_DATE
         conn.commit()
 
     async def insert_results(self, conn, lap):
-        conn = self.db.get_conn()
         cur = conn.cursor()
 
         cur.execute('SELECT id, lap_time FROM results WHERE league_id = %s AND season_id = %s AND week_id = %s AND driver_name = %s', (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
@@ -84,9 +86,10 @@ WHERE w.start_date <= CURRENT_DATE
             """
             cur.execute(sql, (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}', lap['lapTime']))
             conn.commit()
-            self.db.release_conn(conn)
             return
+        print(current_lap[1], lap['lapTime'])
         if current_lap[1] == lap['lapTime']:
+            print('same lap times')
             return
         else:
             sql = """
@@ -96,8 +99,5 @@ WHERE w.start_date <= CURRENT_DATE
             """
             cur.execute(sql, (lap['lapTime'], lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
             conn.commit()
-            self.db.release_conn(conn)
+
         
-        #params = (lap['lap_id'], lap['lap_time'], lap['driver_id'])
-        #cur.execute(sql, params)
-        #conn.commit()
