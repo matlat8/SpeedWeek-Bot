@@ -59,11 +59,12 @@ WHERE w.start_date <= CURRENT_DATE
                     continue
                 guild_id, channel_id = notifications
                 channel = self.bot.get_channel(channel_id)
-                await channel.send(self.embeds.initial_laptime_msg(lap))
                 if action == 'inserted':
                     msg = self.embeds.initial_laptime_msg(lap)
+                    await channel.send(msg)
                 if action == 'updated':
-                    pass
+                    msg = self.embeds.updated_laptime_msg(lap)
+                    await channel.send(msg)
         self.db.release_conn(conn)
 
     async def get_week_laps(self, track_id, car_id, team_id, start_date):
