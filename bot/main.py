@@ -16,7 +16,7 @@ TOKEN = os.environ.get('DISCORD_TOKEN')
 intents = discord.Intents.default()
 intents.message_content = True
 
-activity = discord.Activity(name=f"{os.environ.get('DISCORD_COMMAND_PREFIX')}driver help - v{__version__}", type=discord.ActivityType.listening)
+activity = discord.Activity(name=f"{os.environ.get('DISCORD_COMMAND_PREFIX')}help - v{__version__}", type=discord.ActivityType.listening)
 bot = commands.Bot(command_prefix=os.environ.get('DISCORD_COMMAND_PREFIX'), intents=intents, activity=activity)
 
 setup_database()

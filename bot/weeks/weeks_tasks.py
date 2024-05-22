@@ -5,11 +5,14 @@ import aiohttp
 import os
 import arrow
 
+from .embeds import WeekEmbeds
+
 class WeeksTasks:
     def __init__(self, bot):
         self.bot = bot
         self.db = DB(1, 5)
         self.check_weeks.start()
+        self.embeds = WeekEmbeds()
 
     @tasks.loop(minutes=2)
     async def check_weeks(self):
@@ -38,20 +41,34 @@ WHERE w.start_date <= CURRENT_DATE
         if week_params is None:
             return
         
-        print(week_params)
         for week in week_params:
             laps = await self.get_week_laps(week[4], week[3], week[7], week[5])
-            for lap in laps['items']:
+            for index, lap in enumerate(laps['items']):
+                lap['rank'] = index + 1
                 lap['week_id'] = week[0]
                 lap['season_id'] = week[1]
                 lap['league_id'] = week[8]
-                await self.insert_results(conn, lap)
+                action = await self.insert_results(conn, lap)
+                if action == 'no action':
+                    continue
+
+                sql = "SELECT guild_id, channel_id from notifications WHERE league_id = %s AND notification_type =  'lap_time'"
+                cur.execute(sql, (lap['league_id'],))
+                notifications = cur.fetchone()
+                if notifications is None:
+                    continue
+                guild_id, channel_id = notifications
+                channel = self.bot.get_channel(channel_id)
+                await channel.send(self.embeds.initial_laptime_msg(lap))
+                if action == 'inserted':
+                    msg = self.embeds.initial_laptime_msg(lap)
+                if action == 'updated':
+                    pass
         self.db.release_conn(conn)
 
     async def get_week_laps(self, track_id, car_id, team_id, start_date):
         async with aiohttp.ClientSession() as session:
             start_date = arrow.get(start_date).format('YYYY-MM-DDTHH:mm:ss[Z]')
-            print(start_date)
             url = f"https://garage61.net/api/v1/laps?tracks={track_id}&cars={car_id}&teams={team_id}&after={start_date}"
             headers = {'Authorization': f'Bearer {os.environ.get("GARAGE61_API_KEY")}'}
             async with session.get(url, headers=headers) as response:
@@ -61,43 +78,31 @@ WHERE w.start_date <= CURRENT_DATE
                 else:
                     print(f"Failed to get week laps. Status code: {response.status}\n{await response.text()}")
 
-    async def upsert_results(self, lap):
-        conn = self.db.get_conn()
-        cur = conn.cursor()
-        sql = """
-            INSERT INTO lapdata (lap_id, lap_time, driver_id)
-            VALUES (%s, %s, %s)
-            ON CONFLICT (lap_id) DO UPDATE
-            SET lap_time = EXCLUDED.lap_time, driver_id = EXCLUDED.driver_id
-        """
-        params = (lap['lap_id'], lap['lap_time'], lap['driver_id'])
-        cur.execute(sql, params)
-        conn.commit()
-
     async def insert_results(self, conn, lap):
         cur = conn.cursor()
 
-        cur.execute('SELECT id, lap_time FROM results WHERE league_id = %s AND season_id = %s AND week_id = %s AND driver_name = %s', (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
+        cur.execute('SELECT id, lap_time, garage_lapid FROM results WHERE league_id = %s AND season_id = %s AND week_id = %s AND driver_name = %s', (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
         current_lap = cur.fetchone()
         if not current_lap:
             sql = """
-                INSERT INTO results (league_id, season_id, week_id, driver_name, lap_time, last_updated)
-                VALUES (%s, %s, %s, %s, %s, NOW())
+                INSERT INTO results (league_id, season_id, week_id, driver_name, lap_time, garage_lapid, last_updated)
+                VALUES (%s, %s, %s, %s, %s, %s,NOW())
             """
-            cur.execute(sql, (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}', lap['lapTime']))
+            cur.execute(sql, (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}', lap['lapTime'], lap['id']))
             conn.commit()
-            return
-        print(current_lap[1], lap['lapTime'])
-        if current_lap[1] == lap['lapTime']:
-            print('same lap times')
-            return
+            return 'inserted'
+        
+        if current_lap[2] == lap['id']:
+            return 'no action'
         else:
             sql = """
                 UPDATE results
-                SET lap_time = %s, last_updated = NOW()
+                SET lap_time = %s, garage_lapid = %s, last_updated = NOW()
                 WHERE league_id = %s AND season_id = %s AND week_id = %s AND driver_name = %s
             """
-            cur.execute(sql, (lap['lapTime'], lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
+            lap_time = f'{lap["lapTime"]}'
+            cur.execute(sql, (lap_time, lap['id'], lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
             conn.commit()
+            return 'updated'
 
         
