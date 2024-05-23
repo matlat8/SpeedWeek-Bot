@@ -49,6 +49,7 @@ WHERE w.start_date <= CURRENT_DATE
                 lap['season_id'] = week[1]
                 lap['league_id'] = week[8]
                 action = await self.insert_results(conn, lap)
+                print(action)
                 # If the time was the same, do nothing
                 if action == 'no action':
                     continue
@@ -70,7 +71,7 @@ WHERE w.start_date <= CURRENT_DATE
                     msg = self.embeds.initial_laptime_msg(lap, position_plus_minus)
                     await channel.send(msg)
                 if action == 'updated':
-                    msg = self.embeds.updated_laptime_msg(lap)
+                    msg = self.embeds.updated_laptime_msg(lap, position_plus_minus)
                     await channel.send(msg)
         self.db.release_conn(conn)
 

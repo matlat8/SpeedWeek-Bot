@@ -15,9 +15,11 @@ class WeekEmbeds:
         #msg += f"Rank: {lap['rank']}"
         return msg
 
-    def updated_laptime_msg(self, lap):
+    def updated_laptime_msg(self, lap, position_plus_minus):
         msg = ''
         msg += f"Updated lap time for {lap['driver']['firstName']} {lap['driver']['lastName']}:\n"
-        msg += f'Lap Time: {lap["lapTime"]:.3f}\n'
-        msg += f"Rank: {lap['rank']}"
+        for position in position_plus_minus:
+            if position[4] == f"{lap['driver']['firstName']} {lap['driver']['lastName']}":
+                msg += f"\t**P{position[9]} {lap['driver']['firstName']} {lap['driver']['lastName']} - {lap['lapTime']:.3f}**\n"
+            else: msg += f"*P{position[9]} {position[4]} - {position[5]:.3f}*\n"
         return msg
