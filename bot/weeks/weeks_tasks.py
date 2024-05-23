@@ -49,6 +49,7 @@ WHERE w.start_date <= CURRENT_DATE
                 lap['season_id'] = week[1]
                 lap['league_id'] = week[8]
                 action = await self.insert_results(conn, lap)
+                # If the time was the same, do nothing
                 if action == 'no action':
                     continue
 
@@ -59,8 +60,14 @@ WHERE w.start_date <= CURRENT_DATE
                     continue
                 guild_id, channel_id = notifications
                 channel = self.bot.get_channel(channel_id)
+                with open(os.path.join(os.path.dirname(__file__), 'sql', 'lap_times_for_driver.sql'), 'r') as file:
+                    sql = file.read()
+
+                cur.execute(sql, (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
+                position_plus_minus = cur.fetchall()
+
                 if action == 'inserted':
-                    msg = self.embeds.initial_laptime_msg(lap)
+                    msg = self.embeds.initial_laptime_msg(lap, position_plus_minus)
                     await channel.send(msg)
                 if action == 'updated':
                     msg = self.embeds.updated_laptime_msg(lap)
