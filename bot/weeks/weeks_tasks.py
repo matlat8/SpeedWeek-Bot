@@ -32,7 +32,7 @@ FROM weeks w
 LEFT JOIN seasons s
     ON w.season_id = s.id
 LEFT JOIN leagues l
-    ON s.league_id = s.id
+    ON s.league_id = l.id
 WHERE w.start_date <= CURRENT_DATE
   AND w.end_date >= CURRENT_DATE
   """
