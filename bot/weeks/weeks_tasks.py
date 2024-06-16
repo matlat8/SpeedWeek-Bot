@@ -43,36 +43,37 @@ WHERE w.start_date <= CURRENT_DATE
         
         for week in week_params:
             laps = await self.get_week_laps(week[4], week[3], week[7], week[5])
-            for index, lap in enumerate(laps['items']):
-                lap['rank'] = index + 1
-                lap['week_id'] = week[0]
-                lap['season_id'] = week[1]
-                lap['league_id'] = week[8]
-                action = await self.insert_results(conn, lap)
-                print(action)
-                # If the time was the same, do nothing
-                if action == 'no action':
-                    continue
-
-                sql = "SELECT guild_id, channel_id from notifications WHERE league_id = %s AND notification_type =  'lap_time'"
-                cur.execute(sql, (lap['league_id'],))
-                notifications = cur.fetchone()
-                if notifications is None:
-                    continue
-                guild_id, channel_id = notifications
-                channel = self.bot.get_channel(channel_id)
-                with open(os.path.join(os.path.dirname(__file__), 'sql', 'lap_times_for_driver.sql'), 'r') as file:
-                    sql = file.read()
-
-                cur.execute(sql, (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
-                position_plus_minus = cur.fetchall()
-
-                if action == 'inserted':
-                    msg = self.embeds.initial_laptime_msg(lap, position_plus_minus)
-                    await channel.send(msg)
-                if action == 'updated':
-                    msg = self.embeds.updated_laptime_msg(lap, position_plus_minus)
-                    await channel.send(msg)
+            if laps is not None and 'items' in laps:
+                for index, lap in enumerate(laps['items']):
+                    lap['rank'] = index + 1
+                    lap['week_id'] = week[0]
+                    lap['season_id'] = week[1]
+                    lap['league_id'] = week[8]
+                    action = await self.insert_results(conn, lap)
+                    print(action)
+                    # If the time was the same, do nothing
+                    if action == 'no action':
+                        continue
+                    
+                    sql = "SELECT guild_id, channel_id from notifications WHERE league_id = %s AND notification_type =  'lap_time'"
+                    cur.execute(sql, (lap['league_id'],))
+                    notifications = cur.fetchone()
+                    if notifications is None:
+                        continue
+                    guild_id, channel_id = notifications
+                    channel = self.bot.get_channel(channel_id)
+                    with open(os.path.join(os.path.dirname(__file__), 'sql', 'lap_times_for_driver.sql'), 'r') as file:
+                        sql = file.read()
+    
+                    cur.execute(sql, (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
+                    position_plus_minus = cur.fetchall()
+    
+                    if action == 'inserted':
+                        msg = self.embeds.initial_laptime_msg(lap, position_plus_minus)
+                        await channel.send(msg)
+                    if action == 'updated':
+                        msg = self.embeds.updated_laptime_msg(lap, position_plus_minus)
+                        await channel.send(msg)
         self.db.release_conn(conn)
 
     async def get_week_laps(self, track_id, car_id, team_id, start_date):
