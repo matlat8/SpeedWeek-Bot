@@ -4,7 +4,7 @@ select
     car_id,
     track_id,
     w.start_date as week_start_date,
-    league_id,
+    s.league_id,
     season_num,
     name,
     g61_team_id,
@@ -17,4 +17,4 @@ from weeks w
 where
     w.start_date <= current_date
 and w.end_date >= current_date
-and league_id = %s
+and s.league_id = %s
