@@ -5,6 +5,7 @@ from db import DB
 
 from .api import WeeksAPI
 from .weeks_tasks import WeeksTasks
+from core.crud.leagues import get_id_name_from_leagues
 
 class WeeksCommands(commands.Cog):
     def __init__(self, bot):
@@ -21,8 +22,7 @@ class WeeksCommands(commands.Cog):
         cursor = conn.cursor()
 
         ## Get the League ID
-        cursor.execute('SELECT id, name FROM leagues')
-        leagues = cursor.fetchall()
+        leagues = get_id_name_from_leagues(conn)
         await ctx.send('Enter the league ID for the week you would like to create.')
         for league in leagues:
             await ctx.send(f'ID: {league[0]} --> Name: {league[1]}')
@@ -75,8 +75,7 @@ class WeeksCommands(commands.Cog):
         conn = self.db.get_conn()
         cursor = conn.cursor()
 
-        cursor.execute('SELECT id, name from leagues')
-        leagues = cursor.fetchall()
+        leagues = get_id_name_from_leagues(conn)
         await ctx.send('Enter the league ID for the week you would like to view.')
         for league in leagues:
             await ctx.send(f'ID: {league[0]} --> Name: {league[1]}')
