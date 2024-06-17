@@ -23,3 +23,29 @@ WHERE w.start_date <= CURRENT_DATE
     cursor.execute(sql)
     weeks = fetchall_as_dict(cursor)
     return weeks
+
+async def upsert_laptime(conn, lap):
+    cur = conn.cursor()
+    cur.execute('SELECT id, lap_time, garage_lapid FROM results WHERE league_id = %s AND season_id = %s AND week_id = %s AND driver_name = %s', (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
+    current_lap = cur.fetchone()
+    if not current_lap:
+        sql = """
+            INSERT INTO results (league_id, season_id, week_id, driver_name, lap_time, garage_lapid, last_updated)
+            VALUES (%s, %s, %s, %s, %s, %s,NOW())
+        """
+        cur.execute(sql, (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}', lap['lapTime'], lap['id']))
+        conn.commit()
+        return 'inserted'
+    
+    if current_lap[2] == lap['id']:
+        return 'no action'
+    else:
+        sql = """
+            UPDATE results
+            SET lap_time = %s, garage_lapid = %s, last_updated = NOW()
+            WHERE league_id = %s AND season_id = %s AND week_id = %s AND driver_name = %s
+        """
+        lap_time = f'{lap["lapTime"]}'
+        cur.execute(sql, (lap_time, lap['id'], lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
+        conn.commit()
+        return 'updated'

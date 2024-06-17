@@ -2,7 +2,9 @@ import aiohttp
 import os
 import arrow
 
+from core.logger import setup_logger
 
+logger = setup_logger(__name__)
 
 async def get_week_laps(track_id, car_id, team_id, start_date):
     start_date = arrow.get(start_date).format('YYYY-MM-DDTHH:mm:ss[Z]')
@@ -14,4 +16,4 @@ async def get_week_laps(track_id, car_id, team_id, start_date):
                 data = await response.json()
                 return data
             else:
-                print(f"Failed to get week laps. Status code: {response.status}\n{await response.text()}")
+                logger.error(f"Failed to get week laps. Status code: {response.status}\n{await response.text()}")

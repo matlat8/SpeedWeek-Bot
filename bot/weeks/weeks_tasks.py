@@ -6,8 +6,11 @@ import os
 import arrow
 
 from .embeds import WeekEmbeds
-from core.crud.weeks import get_active_weeks
+from core.crud.weeks import get_active_weeks, upsert_laptime
 from core.garage.laps import get_week_laps
+from core.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class WeeksTasks:
     def __init__(self, bot):
@@ -18,16 +21,20 @@ class WeeksTasks:
 
     @tasks.loop(minutes=2)
     async def check_weeks(self):
-        print('Checking for new laps')
+        logger.debug('Checking for new lap times')
         conn = self.db.get_conn()
         cur = conn.cursor()
         week_params = get_active_weeks(conn)
         if week_params is None:
             return
+        logger.debug(f'Found {len(week_params)} active weeks')
         
+        # Loop through the active weeks
         for week in week_params:
+            # Call the G61 API to get the laps for the week
             laps = await get_week_laps(week['track_id'], week['car_id'], week['g61_team_id'], week['start_date'])
             if laps is not None and 'items' in laps:
+                logger.debug(f'Found {len(laps["items"])} laps for week id {week["week_id"]}')
                 for index, lap in enumerate(laps['items']):
                     lap['rank'] = index + 1
                     lap['week_id'] = week[0]
@@ -59,18 +66,6 @@ class WeeksTasks:
                         msg = self.embeds.updated_laptime_msg(lap, position_plus_minus)
                         await channel.send(msg)
         self.db.release_conn(conn)
-
-    async def get_week_laps(self, track_id, car_id, team_id, start_date):
-        async with aiohttp.ClientSession() as session:
-            start_date = arrow.get(start_date).format('YYYY-MM-DDTHH:mm:ss[Z]')
-            url = f"https://garage61.net/api/v1/laps?tracks={track_id}&cars={car_id}&teams={team_id}&after={start_date}&drivers=me"
-            headers = {'Authorization': f'Bearer {os.environ.get("GARAGE61_API_KEY")}'}
-            async with session.get(url, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return data
-                else:
-                    print(f"Failed to get week laps. Status code: {response.status}\n{await response.text()}")
 
     async def insert_results(self, conn, lap):
         cur = conn.cursor()
