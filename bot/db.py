@@ -4,14 +4,11 @@ import os
 
 class DB:
     def __init__(self, minconn, maxconn):
+        connection_string = os.environ.get('POSTGRES_URL')
         self.conn_pool = psycopg2.pool.SimpleConnectionPool(
             minconn,
             maxconn,
-            database=os.environ.get('POSTGRES_DB'),
-            user=os.environ.get('POSTGRES_USER'),
-            password=os.environ.get('POSTGRES_PASSWORD'),
-            host=os.environ.get('POSTGRES_HOST'),
-            port=os.environ.get('POSTGRES_PORT')
+            dsn=connection_string
         )
 
     def get_conn(self):
