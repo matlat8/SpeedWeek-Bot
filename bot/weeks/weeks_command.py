@@ -78,7 +78,7 @@ class WeeksCommands(commands.Cog):
         leagues = get_id_name_from_leagues(conn)
         await ctx.send('Enter the league ID for the week you would like to view.')
         for league in leagues:
-            await ctx.send(f'ID: {league[0]} --> Name: {league[1]}')
+            await ctx.send(f'ID: {league["id"]} --> Name: {league["name"]}')
         league_id = await self.bot.wait_for('message', check=check)
 
         with open(os.path.join(f'{os.path.dirname(__file__)}/sql', 'active_weeks.sql'), 'r') as f:
