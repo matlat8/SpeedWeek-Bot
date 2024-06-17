@@ -6,6 +6,8 @@ import os
 import arrow
 
 from .embeds import WeekEmbeds
+from core.crud.weeks import get_active_weeks
+from core.garage.laps import get_week_laps
 
 class WeeksTasks:
     def __init__(self, bot):
@@ -16,33 +18,15 @@ class WeeksTasks:
 
     @tasks.loop(minutes=2)
     async def check_weeks(self):
+        print('Checking for new laps')
         conn = self.db.get_conn()
         cur = conn.cursor()
-        sql = """
-SELECT w.id AS week_id,
-       season_id,
-       week_num,
-       car_id,
-       track_id,
-       w.start_date,
-       w.end_date,
-       g61_team_id,
-       l.id AS league_id
-FROM weeks w
-LEFT JOIN seasons s
-    ON w.season_id = s.id
-LEFT JOIN leagues l
-    ON s.league_id = l.id
-WHERE w.start_date <= CURRENT_DATE
-  AND w.end_date >= CURRENT_DATE
-  """
-        cur.execute(sql)
-        week_params = cur.fetchall()
+        week_params = get_active_weeks(conn)
         if week_params is None:
             return
         
         for week in week_params:
-            laps = await self.get_week_laps(week[4], week[3], week[7], week[5])
+            laps = await get_week_laps(week['track_id'], week['car_id'], week['g61_team_id'], week['start_date'])
             if laps is not None and 'items' in laps:
                 for index, lap in enumerate(laps['items']):
                     lap['rank'] = index + 1
@@ -54,7 +38,7 @@ WHERE w.start_date <= CURRENT_DATE
                     # If the time was the same, do nothing
                     if action == 'no action':
                         continue
-                    
+
                     sql = "SELECT guild_id, channel_id from notifications WHERE league_id = %s AND notification_type =  'lap_time'"
                     cur.execute(sql, (lap['league_id'],))
                     notifications = cur.fetchone()
@@ -64,10 +48,10 @@ WHERE w.start_date <= CURRENT_DATE
                     channel = self.bot.get_channel(channel_id)
                     with open(os.path.join(os.path.dirname(__file__), 'sql', 'lap_times_for_driver.sql'), 'r') as file:
                         sql = file.read()
-    
+
                     cur.execute(sql, (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
                     position_plus_minus = cur.fetchall()
-    
+
                     if action == 'inserted':
                         msg = self.embeds.initial_laptime_msg(lap, position_plus_minus)
                         await channel.send(msg)
