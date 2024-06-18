@@ -26,10 +26,10 @@ class Notifications(commands.Cog):
         # Get the league ID from the user
         try:
             message = await self.bot.wait_for('message', check=check_message, timeout=60)
+            league_id = int(message.content)
         except asyncio.TimeoutError:
             await ctx.send('You took too long to respond.')
             return
-        league_id = message.content
 
         await ctx.send('Please mention the channel you would like to set as the notification channel.')
         try:
@@ -39,6 +39,9 @@ class Notifications(commands.Cog):
             return
         channel = message.channel_mentions[0]
         insert_notification(conn, league_id, 'lap_time', channel.guild.id, channel.id)
+        conn.commit()
+        league_name = [league['name'] for league in leagues if league['id'] == league_id][0]
+        await ctx.send(f'Notification channel set to {channel.mention} for lap times in league {league_name}')
         pass
 
     
