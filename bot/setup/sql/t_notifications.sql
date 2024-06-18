@@ -4,5 +4,6 @@ CREATE TABLE IF NOT EXISTS notifications(
     notification_type VARCHAR(255) NOT NULL,
     guild_id BIGINT NOT NULL,
     channel_id BIGINT NOT NULL,
-    last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+    last_modified TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (league_id, notification_type, guild_id)
 )

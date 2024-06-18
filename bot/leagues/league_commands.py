@@ -2,7 +2,7 @@ from discord.ext import commands
 
 from .api import LeagueAPI
 from core.crud.leagues import new_league, get_leagues
-from core.embeds.leagues import view_leagues_embed
+from core.embeds.leagues import view_leagues_basic_embed
 from db import DB
 
 class LeagueCommands(commands.Cog):
@@ -44,7 +44,7 @@ class LeagueCommands(commands.Cog):
         if not leagues:
             await ctx.send('No leagues found.')
             return
-        embed = view_leagues_embed(leagues)
+        embed = view_leagues_basic_embed(leagues)
         await ctx.send(embed=embed)
 
         return

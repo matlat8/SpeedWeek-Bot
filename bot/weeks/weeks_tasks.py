@@ -7,6 +7,7 @@ import arrow
 
 from .embeds import WeekEmbeds
 from core.crud.weeks import get_active_weeks, upsert_laptime
+from core.crud.notifications import get_notifications_for_league_for_laptime
 from core.garage.laps import get_week_laps
 from core.logger import setup_logger
 
@@ -28,7 +29,7 @@ class WeeksTasks:
         if week_params is None:
             return
         logger.debug(f'Found {len(week_params)} active weeks')
-        
+
         # Loop through the active weeks
         for week in week_params:
             # Call the G61 API to get the laps for the week
@@ -41,18 +42,15 @@ class WeeksTasks:
                     lap['season_id'] = week[1]
                     lap['league_id'] = week[8]
                     action = await self.insert_results(conn, lap)
-                    print(action)
                     # If the time was the same, do nothing
                     if action == 'no action':
                         continue
-
-                    sql = "SELECT guild_id, channel_id from notifications WHERE league_id = %s AND notification_type =  'lap_time'"
-                    cur.execute(sql, (lap['league_id'],))
-                    notifications = cur.fetchone()
+                    
+                    notifications = get_notifications_for_league_for_laptime(conn, week['league_id'])
+                    # if there are no notifications for the league, do nothing
                     if notifications is None:
                         continue
-                    guild_id, channel_id = notifications
-                    channel = self.bot.get_channel(channel_id)
+                    channel = self.bot.get_channel(notifications['channel_id'])
                     with open(os.path.join(os.path.dirname(__file__), 'sql', 'lap_times_for_driver.sql'), 'r') as file:
                         sql = file.read()
 
