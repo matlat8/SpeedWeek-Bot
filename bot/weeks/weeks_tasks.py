@@ -6,6 +6,12 @@ import os
 import arrow
 
 from .embeds import WeekEmbeds
+from core.crud.weeks import get_active_weeks, upsert_laptime
+from core.crud.notifications import get_notifications_for_league_for_laptime
+from core.garage.laps import get_week_laps
+from core.logger import setup_logger
+
+logger = setup_logger(__name__)
 
 class WeeksTasks:
     def __init__(self, bot):
@@ -16,58 +22,41 @@ class WeeksTasks:
 
     @tasks.loop(minutes=2)
     async def check_weeks(self):
+        logger.debug('Checking for new lap times')
         conn = self.db.get_conn()
         cur = conn.cursor()
-        sql = """
-SELECT w.id AS week_id,
-       season_id,
-       week_num,
-       car_id,
-       track_id,
-       w.start_date,
-       w.end_date,
-       g61_team_id,
-       l.id AS league_id
-FROM weeks w
-LEFT JOIN seasons s
-    ON w.season_id = s.id
-LEFT JOIN leagues l
-    ON s.league_id = l.id
-WHERE w.start_date <= CURRENT_DATE
-  AND w.end_date >= CURRENT_DATE
-  """
-        cur.execute(sql)
-        week_params = cur.fetchall()
+        week_params = get_active_weeks(conn)
         if week_params is None:
             return
-        
+        logger.debug(f'Found {len(week_params)} active weeks')
+
+        # Loop through the active weeks
         for week in week_params:
-            laps = await self.get_week_laps(week[4], week[3], week[7], week[5])
+            # Call the G61 API to get the laps for the week
+            laps = await get_week_laps(week['track_id'], week['car_id'], week['g61_team_id'], week['start_date'])
             if laps is not None and 'items' in laps:
+                logger.debug(f'Found {len(laps["items"])} laps for week id {week["week_id"]}')
                 for index, lap in enumerate(laps['items']):
                     lap['rank'] = index + 1
                     lap['week_id'] = week[0]
                     lap['season_id'] = week[1]
                     lap['league_id'] = week[8]
                     action = await self.insert_results(conn, lap)
-                    print(action)
                     # If the time was the same, do nothing
                     if action == 'no action':
                         continue
                     
-                    sql = "SELECT guild_id, channel_id from notifications WHERE league_id = %s AND notification_type =  'lap_time'"
-                    cur.execute(sql, (lap['league_id'],))
-                    notifications = cur.fetchone()
+                    notifications = get_notifications_for_league_for_laptime(conn, week['league_id'])
+                    # if there are no notifications for the league, do nothing
                     if notifications is None:
                         continue
-                    guild_id, channel_id = notifications
-                    channel = self.bot.get_channel(channel_id)
+                    channel = self.bot.get_channel(notifications['channel_id'])
                     with open(os.path.join(os.path.dirname(__file__), 'sql', 'lap_times_for_driver.sql'), 'r') as file:
                         sql = file.read()
-    
+
                     cur.execute(sql, (lap['league_id'], lap['season_id'], lap['week_id'], f'{lap["driver"]["firstName"]} {lap["driver"]["lastName"]}'))
                     position_plus_minus = cur.fetchall()
-    
+
                     if action == 'inserted':
                         msg = self.embeds.initial_laptime_msg(lap, position_plus_minus)
                         await channel.send(msg)
@@ -75,18 +64,6 @@ WHERE w.start_date <= CURRENT_DATE
                         msg = self.embeds.updated_laptime_msg(lap, position_plus_minus)
                         await channel.send(msg)
         self.db.release_conn(conn)
-
-    async def get_week_laps(self, track_id, car_id, team_id, start_date):
-        async with aiohttp.ClientSession() as session:
-            start_date = arrow.get(start_date).format('YYYY-MM-DDTHH:mm:ss[Z]')
-            url = f"https://garage61.net/api/v1/laps?tracks={track_id}&cars={car_id}&teams={team_id}&after={start_date}&drivers=me"
-            headers = {'Authorization': f'Bearer {os.environ.get("GARAGE61_API_KEY")}'}
-            async with session.get(url, headers=headers) as response:
-                if response.status == 200:
-                    data = await response.json()
-                    return data
-                else:
-                    print(f"Failed to get week laps. Status code: {response.status}\n{await response.text()}")
 
     async def insert_results(self, conn, lap):
         cur = conn.cursor()
