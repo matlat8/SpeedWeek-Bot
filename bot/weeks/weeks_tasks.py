@@ -38,9 +38,9 @@ class WeeksTasks:
                 logger.debug(f'Found {len(laps["items"])} laps for week id {week["week_id"]}')
                 for index, lap in enumerate(laps['items']):
                     lap['rank'] = index + 1
-                    lap['week_id'] = week[0]
-                    lap['season_id'] = week[1]
-                    lap['league_id'] = week[8]
+                    lap['week_id'] = week['week_id']
+                    lap['season_id'] = week['season_id']
+                    lap['league_id'] = week['league_id']
                     action = await self.insert_results(conn, lap)
                     # If the time was the same, do nothing
                     if action == 'no action':
@@ -51,6 +51,8 @@ class WeeksTasks:
                     if notifications is None:
                         continue
                     channel = self.bot.get_channel(notifications['channel_id'])
+                    if channel is None:
+                        continue
                     with open(os.path.join(os.path.dirname(__file__), 'sql', 'lap_times_for_driver.sql'), 'r') as file:
                         sql = file.read()
 
@@ -58,9 +60,11 @@ class WeeksTasks:
                     position_plus_minus = cur.fetchall()
 
                     if action == 'inserted':
+                        logger.debug(f'New lap time for {lap["driver"]["firstName"]} {lap["driver"]["lastName"]}')
                         msg = self.embeds.initial_laptime_msg(lap, position_plus_minus)
                         await channel.send(msg)
                     if action == 'updated':
+                        logger.debug(f'Updated lap time for {lap["driver"]["firstName"]} {lap["driver"]["lastName"]}')
                         msg = self.embeds.updated_laptime_msg(lap, position_plus_minus)
                         await channel.send(msg)
         self.db.release_conn(conn)

@@ -4,7 +4,7 @@ from core.logger import setup_logger
 
 logger = setup_logger(__name__)
 
-def get_notifications_for_league_for_laptime(conn):
+def get_notifications_for_league_for_laptime(conn, league_id: int):
     cursor = conn.cursor()
     sql = "SELECT id, league_id, notification_type, guild_id, channel_id, last_modified from notifications WHERE league_id = %s AND notification_type =  'lap_time'"
     cursor.execute(sql, (league_id,))

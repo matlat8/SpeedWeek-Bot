@@ -2,15 +2,15 @@ from core.crud.utils import fetchall_as_dict
 
 def get_active_weeks(conn):
     sql = """
-SELECT w.id AS week_id,
-       season_id,
-       week_num,
-       car_id,
-       track_id,
-       w.start_date,
-       w.end_date,
-       g61_team_id,
-       l.id AS league_id
+SELECT w.id AS week_id, -- 0
+       season_id, -- 1
+       week_num, --2
+       car_id, --3
+       track_id, -- 4
+       w.start_date, --5
+       w.end_date, -- 6
+       g61_team_id,-- 7
+       l.id AS league_id --8
 FROM weeks w
 LEFT JOIN seasons s
     ON w.season_id = s.id
