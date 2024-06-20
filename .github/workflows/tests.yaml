@@ -26,5 +26,5 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m unittest discover -v -s . -p '*_test.py'
+        python -m unittest discover -v -s tests -p '*_test.py'
       working-directory: bot
