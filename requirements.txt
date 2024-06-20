@@ -5,3 +5,4 @@ pandas
 boto3
 discord
 discordhealthcheck
+pytest==8.2.2
