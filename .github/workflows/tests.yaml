@@ -26,5 +26,9 @@ jobs:
 
     - name: Run tests
       run: |
-        python -m unittest discover -v -s tests -p '*_test.py'
+        coverage run -m unittest discover -v -s ./tests -p '*_test.py'
       working-directory: bot
+    - name: Generate coverage report
+      run: |
+        coverage report
+        coverage xml
