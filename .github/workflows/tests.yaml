@@ -32,3 +32,9 @@ jobs:
       run: |
         coverage report
         coverage xml
+      working-directory: bot
+    - name: Upload coverage reports to Codecov
+      working-directory: bot
+      uses: codecov/codecov-action@v4.0.1
+      with:
+        token: ${{ secrets.CODECOV_TOKEN }}
