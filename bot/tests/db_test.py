@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import patch, MagicMock
-from bot.db import DB
+from db import DB
 
 class TestDB(unittest.TestCase):
     @patch('psycopg2.pool.SimpleConnectionPool')

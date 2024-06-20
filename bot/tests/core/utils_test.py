@@ -1,6 +1,6 @@
 import unittest
 from unittest.mock import Mock
-from bot.core.crud import utils
+from core.crud import utils
 
 class TestFetchOneAsDict(unittest.TestCase):
     def test_single_row(self):
