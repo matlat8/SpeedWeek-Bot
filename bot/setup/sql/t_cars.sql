@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS cars (
     id SERIAL PRIMARY KEY,
     g61_id INTEGER,
-    ir_id INTEGER,
+    ir_id INTEGER UNIQUE,
     car_make VARCHAR(255),
     car_model VARCHAR(255),
     car_name VARCHAR(255),
