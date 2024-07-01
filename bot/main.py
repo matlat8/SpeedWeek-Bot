@@ -11,6 +11,7 @@ from leagues import LeagueCommands
 from seasons import SeasonCommands
 from weeks import WeeksCommands
 from cogs.notifications import Notifications
+from cogs.cars_cog import CarsCommands
 
 TOKEN = os.environ.get('DISCORD_TOKEN')
 
@@ -29,6 +30,7 @@ async def on_ready():
     await bot.add_cog(SeasonCommands(bot))
     await bot.add_cog(WeeksCommands(bot))
     await bot.add_cog(Notifications(bot))
+    await bot.add_cog(CarsCommands(bot))
     print(f'{bot.user} has connected to Discord!')
 
 
