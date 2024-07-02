@@ -5,5 +5,6 @@ from tasks.load_cars_task import load_cars
 
 class CarsCommands(commands.Cog):
     def __init__(self, bot):
-        load_cars.start(bot)
+        self.bot = bot
+        load_cars.start(self.bot)
 
