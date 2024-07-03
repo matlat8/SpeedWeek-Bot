@@ -23,3 +23,15 @@ async def upsert_cars(conn, cars):
 
     for car in cars:
         await conn.execute(insert_sql, car['ir_id'], car['car_make'], car['car_model'], car['car_name'], car['car_name_abbreviated'], car['car_categories'], car['car_weight'], car['free_with_subscription'], car['has_headlights'], car['has_multiple_dry_tire_types'], car['has_rain_capable_tire_types'], car['hp'], car['is_ps_purchasable'], car['price'], car['rain_enabled'])
+
+async def get_randomcar(conn, category, free_tracks_only=False):
+    if free_tracks_only:
+        sql = """
+        SELECT car_name FROM cars WHERE car_categories @> $1 AND free_with_subscription = True ORDER BY random() LIMIT 1;
+        """
+    else:
+        sql = """
+        SELECT car_name FROM cars WHERE car_categories @> $1 ORDER BY random() LIMIT 1;
+        """
+    record = await conn.fetchrow(sql, [category])
+    return record

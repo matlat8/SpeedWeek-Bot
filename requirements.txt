@@ -8,3 +8,4 @@ discordhealthcheck
 pytest==8.2.2
 coverage
 asyncpg
+uvicorn

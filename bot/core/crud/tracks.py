@@ -21,3 +21,18 @@ async def upsert_tracks(conn, tracks):
     
     for track in tracks:
         await conn.execute(upsert_sql, track['ir_id'], track['category'], track['track_name'], track['config_name'], track['is_dirt'], track['is_oval'], track['is_ps_purchasable'], track['location'], track['price'], track['price_display'], track['purchasable'], track['track_config_length'], track['free_with_subscription'])
+
+
+async def get_randomtrack(conn, category, free_tracks_only=False):
+
+    # If free tracks only is set to True, only return tracks that are free with subscription
+    if free_tracks_only:
+        sql = """
+        SELECT track_name, config_name FROM tracks WHERE category = $1 AND free_with_subscription = True ORDER BY random() LIMIT 1;
+        """
+    else:
+        sql = """
+        SELECT track_name, config_name FROM tracks WHERE category = $1 ORDER BY random() LIMIT 1;
+        """
+    record = await conn.fetchrow(sql, category)
+    return record
