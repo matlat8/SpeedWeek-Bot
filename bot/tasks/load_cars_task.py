@@ -10,8 +10,10 @@ logger = setup_logger(__name__)
 async def load_cars(bot):
     logger.debug('Start load_cars task')
     
-    db = DB(1,1)
-    conn = db.get_conn()
+    
+    db = bot.get_cog('Database')
+    conn = await db.get_connection()
+
     cars = await get_cars()
     
     logger.debug(f'Found {len(cars)} cars from iRacing API')
@@ -20,7 +22,7 @@ async def load_cars(bot):
 
     logger.debug(f'Formatted {len(formatted_cars)} cars')
                  
-    upsert_cars(conn, formatted_cars)
+    await upsert_cars(conn, formatted_cars)
     
     logger.debug('Upserted cars')
     
