@@ -28,11 +28,6 @@ bot = commands.Bot(command_prefix=os.environ.get('DISCORD_COMMAND_PREFIX'), inte
 
 setup_database()
 
-@bot.event
-async def on_ready():
-    healthcheck_server = await discordhealthcheck.start(bot)
-    print(f'{bot.user} has connected to Discord!')
-
 class Database(commands.Cog): 
     def __init__(self, bot):
         self.bot = bot
@@ -57,6 +52,7 @@ database = Database(bot)
 @bot.event
 async def on_ready():
     await load_cogs()
+    healthcheck_server = await discordhealthcheck.start(bot)
     #await bot.loop.run_until_complete(load_cogs())
     print(f'Logged in as {bot.user}')
 
