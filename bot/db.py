@@ -1,4 +1,5 @@
 import psycopg2.pool
+import  asyncpg
 import os
 
 
@@ -16,3 +17,4 @@ class DB:
 
     def release_conn(self, conn):
         self.conn_pool.putconn(conn)
+

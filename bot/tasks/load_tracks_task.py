@@ -11,6 +11,9 @@ logger = setup_logger(__name__)
 @tasks.loop(hours=24)
 async def load_tracks(bot):
     logger.debug('Start load_tracks task')
+
+    database = bot.get_cog('Database')
+    connection = await database.get_connection()
     
     db = DB(1,1)
     conn = db.get_conn()
@@ -26,7 +29,7 @@ async def load_tracks(bot):
 
     logger.debug(f'Formatted {len(formatted_tracks)} tracks')
                  
-    upsert_tracks(conn, formatted_tracks)
+    await upsert_tracks(connection, formatted_tracks)
     
     logger.debug('Upserted tracks')
 
